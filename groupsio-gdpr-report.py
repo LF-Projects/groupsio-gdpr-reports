@@ -103,16 +103,19 @@ while more_groups:
                         (group['group_name'],search_email.replace('+','%2B')),
                         cookies=cookie).json()
 
-                if not search_group['total_count']:
+                # If user is not a member, move to the next group
 
-                    print ('%s is not a member of %s.' %
+                if search_group['total_count']:
+                    found_accounts.append(group['group_name'])
+
+                    print ('  - %s is registered for this group, looking for relevant activity' %
+                        search_email)
+
+                else:
+                    print ('  - %s is not a member of %s, skipping' %
                         (search_email,monitored_groups[group['group_name']]['title']))
                     continue
 
-                found_accounts.append(group['group_name'])
-
-                print ('  - %s is registered for this group, looking for relevant activity' %
-                    search_email)
                 search_user_id = search_group['data'][0]['user_id']
 
                 # Check if the user has any activity on the main list
@@ -227,28 +230,24 @@ for name,description in monitored_groups.items():
     print(' * %s (%s)' % (description['title'],description['domain']))
 
 if found_accounts:
-
     print('\nAccounts were found in the following groups:\n')
 
     for name in found_accounts:
 
         print(' * %s (%s)' % (monitored_groups[name]['title'],monitored_groups[name]['domain']))
 
-    if found_activity:
+else:
+    print('No accounts were found. User is not registered in Groups.io.')
 
-        print('\nActivity was found in the following groups:\n')
+if found_activity:
+    print('\nActivity was found in the following groups:\n')
 
-        for name in found_activity.keys():
+    for name in found_activity.keys():
 
-            print(' * %s (%s)' % (monitored_groups[name]['title'],monitored_groups[name]['domain']))
-
-    else:
-
-        print('No activity found for user in Groups.io.')
+        print(' * %s (%s)' % (monitored_groups[name]['title'],monitored_groups[name]['domain']))
 
 else:
-
-    print('No accounts were found. User is not registered in Groups.io.')
+    print('No activity found for user in Groups.io.')
 
 ### Generate a PDF report ###
 
@@ -309,6 +308,8 @@ pdf.cell(w=0, h=5, ln=1, txt='')
 
 pdf.set_font('DejaVuSerif', '', 12)
 
+# Report found accounts
+
 if found_accounts:
 
     pdf.multi_cell(w=0, h=5, align='L', txt = 'Accounts for %s were found in the following groups:' % search_email)
@@ -323,96 +324,95 @@ if found_accounts:
 
     pdf.cell(w=0, h=6, ln=1, txt='')
 
-    if found_activity:
-
-        pdf.multi_cell(w=0, h=5, align='L', txt = 'Activity by %s was found in the following groups:' % search_email)
-
-        pdf.cell(w=0, h=3, ln=1, txt='')
-
-        for name in found_activity.keys():
-            summary = '  » %s (https://%s)' % (monitored_groups[name]['title'],monitored_groups[name]['domain'])
-
-            pdf.cell(w=0, h=6, align='L', ln=1, txt=summary)
-
-        # Print a page with a report of each subgroup
-
-        for groupname,subgroups in found_activity.items():
-
-            pdf.add_page()
-
-            # Add a page title
-
-            pdf.cell(w=0, h=10, ln=1, txt='')
-
-            pdf.set_font('DejaVuSerif', 'B', 16)
-
-            pdf.multi_cell(w=0, h=9, border=0, align='C', fill=0, txt='%s\nhttps://%s' %
-                (monitored_groups[groupname]['title'],monitored_groups[groupname]['domain']))
-
-            pdf.cell(w=0, h=15, ln=1, txt='')
-
-            # Print activity from subgroups
-
-            for subgroup,archives in subgroups.items():
-
-                if not archives:
-                    continue
-
-                pdf.set_font('DejaVuSerif', 'B', 16)
-
-                pdf.multi_cell(w=0, h=10, align='L', txt='Subgroup:  "%s"' %
-                    subgroup[len(groupname)+1:])
-
-                pdf.cell(w=0, h=5, ln=1, txt='')
-
-                for entry in archives:
-
-                    pdf.set_font('DejaVuSerif', 'B', 12)
-
-                    pdf.multi_cell(w=0, h=6, align='L', txt='Subject:')
-
-                    pdf.set_font('DejaVuSerif', '', 12)
-
-                    pdf.multi_cell(w=0, h=6, align='L', txt=html.unescape(entry['subject']))
-
-                    pdf.cell(w=0, h=3, ln=1, txt='')
-
-                    pdf.set_font('DejaVuSerif', 'B', 12)
-
-                    pdf.multi_cell(w=0, h=6, align='L', txt='Date:')
-
-                    pdf.set_font('DejaVuSerif', '', 12)
-
-                    pdf.multi_cell(w=0, h=6, align='L', txt=entry['date'])
-
-                    pdf.cell(w=0, h=3, ln=1, txt='')
-
-                    pdf.set_font('DejaVuSerif', 'B', 12)
-
-                    pdf.multi_cell(w=0, h=6, align='L', txt='Excerpt:')
-
-                    pdf.set_font('DejaVuSerif', '', 12)
-
-                    ellipses = ''
-                    if len(html.unescape(entry['summary'])) >= 199:
-                        ellipses = '...'
-
-                    pdf.multi_cell(w=0, h=6, align='L', txt=('%s%s' %
-                        (html.unescape(entry['summary']),ellipses)))
-
-                    pdf.cell(w=0, h=10, ln=1, txt='')
-
-    else:
-        pdf.multi_cell(w=0, h=5, align='L', txt= '%s only received messages. No activity found.' % search_email)
-
-    pdf.cell(w=0, h=3, ln=1, txt='')
-
 else:
 
     pdf.multi_cell(w=0, h=5, align='L', txt='%s is not subscribed to any Groups.io instances managed by The Linux Foundation.' % search_email)
 
-    pdf.output(reportfile, 'F')
-    sys.exit()
+# Report found activity
+
+if found_activity:
+
+    pdf.multi_cell(w=0, h=5, align='L', txt = 'Activity by %s was found in the following groups:' % search_email)
+
+    pdf.cell(w=0, h=3, ln=1, txt='')
+
+    for name in found_activity.keys():
+        summary = '  » %s (https://%s)' % (monitored_groups[name]['title'],monitored_groups[name]['domain'])
+
+        pdf.cell(w=0, h=6, align='L', ln=1, txt=summary)
+
+    # Print a page with a report of each subgroup
+
+    for groupname,subgroups in found_activity.items():
+
+        pdf.add_page()
+
+        # Add a page title
+
+        pdf.cell(w=0, h=10, ln=1, txt='')
+
+        pdf.set_font('DejaVuSerif', 'B', 16)
+
+        pdf.multi_cell(w=0, h=9, border=0, align='C', fill=0, txt='%s\nhttps://%s' %
+            (monitored_groups[groupname]['title'],monitored_groups[groupname]['domain']))
+
+        pdf.cell(w=0, h=15, ln=1, txt='')
+
+        # Print activity from subgroups
+
+        for subgroup,archives in subgroups.items():
+
+            if not archives:
+                continue
+
+            pdf.set_font('DejaVuSerif', 'B', 16)
+
+            pdf.multi_cell(w=0, h=10, align='L', txt='Subgroup:  "%s"' %
+                subgroup[len(groupname)+1:])
+
+            pdf.cell(w=0, h=5, ln=1, txt='')
+
+            for entry in archives:
+
+                pdf.set_font('DejaVuSerif', 'B', 12)
+
+                pdf.multi_cell(w=0, h=6, align='L', txt='Subject:')
+
+                pdf.set_font('DejaVuSerif', '', 12)
+
+                pdf.multi_cell(w=0, h=6, align='L', txt=html.unescape(entry['subject']))
+
+                pdf.cell(w=0, h=3, ln=1, txt='')
+
+                pdf.set_font('DejaVuSerif', 'B', 12)
+
+                pdf.multi_cell(w=0, h=6, align='L', txt='Date:')
+
+                pdf.set_font('DejaVuSerif', '', 12)
+
+                pdf.multi_cell(w=0, h=6, align='L', txt=entry['date'])
+
+                pdf.cell(w=0, h=3, ln=1, txt='')
+
+                pdf.set_font('DejaVuSerif', 'B', 12)
+
+                pdf.multi_cell(w=0, h=6, align='L', txt='Excerpt:')
+
+                pdf.set_font('DejaVuSerif', '', 12)
+
+                ellipses = ''
+                if len(html.unescape(entry['summary'])) >= 199:
+                    ellipses = '...'
+
+                pdf.multi_cell(w=0, h=6, align='L', txt=('%s%s' %
+                    (html.unescape(entry['summary']),ellipses)))
+
+                pdf.cell(w=0, h=10, ln=1, txt='')
+
+else:
+    pdf.multi_cell(w=0, h=5, align='L', txt= '%s only received messages. No activity found.' % search_email)
+
+pdf.cell(w=0, h=3, ln=1, txt='')
 
 pdf.output(reportfile, 'F')
 
