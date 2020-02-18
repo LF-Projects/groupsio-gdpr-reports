@@ -242,9 +242,10 @@ else:
 if found_activity:
     print('\nActivity was found in the following groups:\n')
 
-    for name in found_activity.keys():
+    for name,activity in found_activity.items():
 
-        print(' * %s (%s)' % (monitored_groups[name]['title'],monitored_groups[name]['domain']))
+        if activity:
+            print(' * %s (%s)' % (monitored_groups[name]['title'],monitored_groups[name]['domain']))
 
 else:
     print('No activity found for user in Groups.io.')
@@ -336,14 +337,19 @@ if found_activity:
 
     pdf.cell(w=0, h=3, ln=1, txt='')
 
-    for name in found_activity.keys():
-        summary = '  » %s (https://%s)' % (monitored_groups[name]['title'],monitored_groups[name]['domain'])
+    for name,activity in found_activity.items():
 
-        pdf.cell(w=0, h=6, align='L', ln=1, txt=summary)
+        if activity:
+            summary = '  » %s (https://%s)' % (monitored_groups[name]['title'],monitored_groups[name]['domain'])
+
+            pdf.cell(w=0, h=6, align='L', ln=1, txt=summary)
 
     # Print a page with a report of each subgroup
 
     for groupname,subgroups in found_activity.items():
+
+        if not subgroups:
+            continue
 
         pdf.add_page()
 
@@ -362,15 +368,22 @@ if found_activity:
 
         for subgroup,archives in subgroups.items():
 
-            if not archives:
-                continue
-
             pdf.set_font('DejaVuSerif', 'B', 16)
 
             pdf.multi_cell(w=0, h=10, align='L', txt='Subgroup:  "%s"' %
                 subgroup[len(groupname)+1:])
 
             pdf.cell(w=0, h=5, ln=1, txt='')
+
+            if not archives:
+
+                pdf.set_font('DejaVuSerif', '', 12)
+
+                pdf.multi_cell(w=0, h=5, align='L', txt= '%s only received messages. No activity found.' % search_email)
+
+                pdf.cell(w=0, h=10, ln=1, txt='')
+
+                continue
 
             for entry in archives:
 
