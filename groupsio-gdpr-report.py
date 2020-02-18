@@ -173,7 +173,7 @@ while more_groups:
                     for subgroup in subgroups['data']:
 
                         print('    > Checking %s' %
-                            subgroup['name'])
+                            subgroup['name'][len(group['group_name'])+1:])
 
                         more_subgroup_archives = True
                         next_page_token_subgroup_archives = 0
