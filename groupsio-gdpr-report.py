@@ -24,6 +24,20 @@ password = getpass.getpass(prompt='Groups.io admin password: ')
 
 email_pattern = re.compile("[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
 
+### Authenticate and get the cookie ###
+
+session = requests.Session()
+login = session.post(
+        'https://groups.io/api/v1/login',
+        data={'email':user,'password':password}).json()
+cookie = session.cookies
+
+if not 'user' in login:
+    print('\nAuthentication failed.\n')
+    sys.exit()
+
+csrf = login['user']['csrf_token']
+
 ### Find out who we're searching for ###
 
 search_email_raw = email_pattern.findall(input('\nSearch for email: ').lower().strip())
@@ -36,17 +50,6 @@ search_email = search_email_raw[0]
 
 search_user_id = 0
 
-### Groups.io: Get the relevant subgroups ###
-
-# Authenticate and get the cookie
-
-session = requests.Session()
-login = session.post(
-        'https://groups.io/api/v1/login',
-        data={'email':user,'password':password}).json()
-cookie = session.cookies
-
-csrf = login['user']['csrf_token']
 
 ### Find out which main groups the admin is a member of ###
 
