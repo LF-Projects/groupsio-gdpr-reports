@@ -142,6 +142,7 @@ while more_groups:
                     if search_archives['data']:
                         for message in search_archives['data']:
                             found_activity[group['group_name']]['main'] = {
+                                'id': message['msg_num'],
                                 'date': message['created'],
                                 'subject': message['subject'],
                                 'summary': message['summary']}
@@ -199,6 +200,7 @@ while more_groups:
                                 for message in search_subgroup_archives['data']:
 
                                     found_activity[group['group_name']][subgroup['name']].append({
+                                        'id': message['msg_num'],
                                         'date': message['created'],
                                         'subject': message['subject'],
                                         'summary': message['summary']})
@@ -257,6 +259,8 @@ else:
 
 generated_date = datetime.now().strftime("%B %d, %Y")
 reportfile = 'Groups.io GDPR search report - %s - %s.pdf' % (search_email,datetime.now().strftime("%Y-%m-%d"))
+
+# Define a footer
 
 pdf = FPDF()
 
@@ -402,11 +406,26 @@ if found_activity:
 
                 pdf.set_font('DejaVuSerif', 'B', 12)
 
-                pdf.multi_cell(w=0, h=6, align='L', txt='Date:')
+                pdf.multi_cell(w=0, h=6, align='L', txt='Timestamp:')
 
                 pdf.set_font('DejaVuSerif', '', 12)
 
                 pdf.multi_cell(w=0, h=6, align='L', txt=entry['date'])
+
+                pdf.cell(w=0, h=3, ln=1, txt='')
+
+                pdf.set_font('DejaVuSerif', 'B', 12)
+
+                pdf.multi_cell(w=0, h=6, align='L', txt='Direct link:')
+
+                pdf.set_font('DejaVuSerif', '', 12)
+
+                message_url = ('https://%s/g/%s/message/%s' % (
+                    (monitored_groups[groupname]['domain'],
+                    subgroup[len(groupname)+1:],
+                    entry['id'])))
+
+                pdf.multi_cell(w=0, h=6, align='L', txt=message_url)
 
                 pdf.cell(w=0, h=3, ln=1, txt='')
 
