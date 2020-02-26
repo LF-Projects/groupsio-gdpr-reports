@@ -72,7 +72,7 @@ while more_groups:
             cookies=cookie).json()
 
     if groups_page['object'] == 'error':
-        print('Something went wrong: %s' % groups_page['type'])
+        print('0Something went wrong: %s' % groups_page['type'])
         sys.exit()
 
     if groups_page and 'data' in groups_page:
@@ -119,7 +119,15 @@ while more_groups:
                         (search_email,monitored_groups[group['group_name']]['title']))
                     continue
 
-                search_user_id = search_group['data'][0]['user_id']
+                search_user_id = ''
+
+                for response in search_group['data']:
+                    if response['email'] == search_email:
+                        search_user_id = response['user_id']
+
+                if not search_user_id:
+                    print ('  - %s is not a member of %s, skipping' %
+                        (search_email,monitored_groups[group['group_name']]['title']))
 
                 # Check if the user has any activity on the main list
 
@@ -136,7 +144,7 @@ while more_groups:
                             cookies = cookie).json()
 
                     if search_archives['object'] == 'error':
-                        print('Something went wrong: %s' % search_archives['type'])
+                        print('1Something went wrong: %s' % search_archives['type'])
                         sys.exit()
 
                     if search_archives['data']:
@@ -145,7 +153,7 @@ while more_groups:
                                 'id': message['msg_num'],
                                 'date': message['created'],
                                 'subject': message['subject'],
-                                'summary': message['summary']}
+                                'body': message['body']}
 
                     next_page_token_main_archives = search_archives['next_page_token']
 
@@ -165,7 +173,7 @@ while more_groups:
                         cookies=cookie).json()
 
                     if subgroups['object'] == 'error':
-                        print('Something went wrong: %s' % subgroups['type'])
+                        print('2Something went wrong: %s' % subgroups['type'])
                         sys.exit()
 
                     if not subgroups['data']:
@@ -190,6 +198,7 @@ while more_groups:
                                     cookies = cookie).json()
 
                             if search_subgroup_archives['object'] == 'error':
+
                                 print('Something went wrong: %s' % search_subgroup_archives['type'])
                                 sys.exit()
 
@@ -203,7 +212,7 @@ while more_groups:
                                         'id': message['msg_num'],
                                         'date': message['created'],
                                         'subject': message['subject'],
-                                        'summary': message['summary']})
+                                        'body': message['body']})
 
                             next_page_token_subgroup_archives = search_subgroup_archives['next_page_token']
 
@@ -431,21 +440,17 @@ if found_activity:
 
                 pdf.set_font('DejaVuSerif', 'B', 12)
 
-                pdf.multi_cell(w=0, h=6, align='L', txt='Excerpt:')
+                pdf.multi_cell(w=0, h=6, align='L', txt='Content:')
 
                 pdf.set_font('DejaVuSerif', '', 12)
 
-                ellipses = ''
-                if len(html.unescape(entry['summary'])) >= 199:
-                    ellipses = '...'
+                pdf.multi_cell(w=0, h=7, align='L', txt=html.unescape(entry['body']))
 
-                pdf.multi_cell(w=0, h=6, align='L', txt=('%s%s' %
-                    (html.unescape(entry['summary']),ellipses)))
-
-                pdf.cell(w=0, h=10, ln=1, txt='')
+                pdf.cell(w=0, h=15, ln=1, txt='')
 
 else:
-    pdf.multi_cell(w=0, h=5, align='L', txt= '%s only received messages. No activity found.' % search_email)
+
+    pdf.multi_cell(w=0, h=5, align='L', txt= 'No activity found in any groups.' % search_email)
 
 pdf.cell(w=0, h=3, ln=1, txt='')
 
