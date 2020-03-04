@@ -251,10 +251,11 @@ if found_accounts:
         print(' * %s (%s)' % (monitored_groups[name]['title'],monitored_groups[name]['domain']))
 
 else:
-    print('No accounts were found. User is not registered in Groups.io.')
+    print('\nNo accounts were found. User is not registered in Groups.io.')
 
-if found_activity:
+if any(found_activity.values()):
     print('\nActivity was found in the following groups:\n')
+    pprint(found_activity)
 
     for name,activity in found_activity.items():
 
@@ -262,7 +263,7 @@ if found_activity:
             print(' * %s (%s)' % (monitored_groups[name]['title'],monitored_groups[name]['domain']))
 
 else:
-    print('No activity found for user in Groups.io.')
+    print('\nNo activity found for user in Groups.io.')
 
 ### Generate a PDF report ###
 
@@ -347,7 +348,9 @@ else:
 
 # Report found activity
 
-if found_activity:
+if any(found_activity.values()):
+
+    pdf.cell(w=0, h=3, ln=1, txt='')
 
     pdf.multi_cell(w=0, h=5, align='L', txt = 'Activity by %s was found in the following groups:' % search_email)
 
@@ -450,10 +453,12 @@ if found_activity:
 
 else:
 
-    pdf.multi_cell(w=0, h=5, align='L', txt= 'No activity found in any groups.' % search_email)
+    pdf.cell(w=0, h=3, ln=1, txt='')
+
+    pdf.multi_cell(w=0, h=5, align='L', txt= 'No activity by %s found in any groups.' % search_email)
 
 pdf.cell(w=0, h=3, ln=1, txt='')
 
 pdf.output(reportfile, 'F')
 
-print('\nReport created: %s\n' % reportfile)
+print('\n-----------------------\n\nReport created: %s\n' % reportfile)
