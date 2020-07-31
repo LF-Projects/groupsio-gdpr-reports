@@ -255,7 +255,6 @@ else:
 
 if any(found_activity.values()):
     print('\nActivity was found in the following groups:\n')
-    pprint(found_activity)
 
     for name,activity in found_activity.items():
 
